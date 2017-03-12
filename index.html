@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Blackjack</title>
+        <script src="jquery.js"></script>
+        <script src="dist/sweetalert.min.js"></script>
+        <link rel="stylesheet" type="text/css" href="dist/sweetalert.css">
+        <script src="blackjack_OO.js"></script>
+        <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,700" rel="stylesheet">
+        <link rel="stylesheet" href="style.css">
+        <link rel="icon" href="img/chip.png">
+    </head>
+    <body>
+
+        <div class="header">
+            <img src="img/poker_logo2.png" alt="Poker Logo" id="poker">
+            <h1>BLACKJACK</h1>
+        </div>
+        <div id="table">
+          <div id="messages">
+              <h2>Let's Play!</h2>
+          </div>
+
+          <label id="dealer-label">Dealer: </label>
+          <div id="dealer-hand" class="hand">
+
+          </div>
+
+          <label id="player-label">Player: </label>
+          <div id="player-hand" class="hand">
+
+          </div>
+
+          <div class="buttons">
+            <div class="arrow-left hidden"></div>
+            <button id="deal-button" class="disabled">Deal</button>
+            <button id="hit-button" class="disabled">Hit</button>
+            <button id="stand-button" class="disabled">Stand</button>
+            <div class="arrow-right hidden"></div>
+          </div>
+        </div>
+
+        <div class="betting">
+            <div class="bet-square">
+                <p>Bet</p>
+                <p id="bet">$0</p>
+            </div>
+            <div id="five">
+                <img src="img/chip-5.png" alt="Poker Chip 5 value">
+            </div>
+            <div id="ten">
+                <img src="img/chip-7.png" alt="Poker Chip 10 value">
+            </div>
+            <div id="fifteen">
+                <img src="img/chip-4.png" alt="Poker Chip 15 value">
+            </div>
+            <div id="fifty">
+                <img src="img/chip-3.png" alt="Poker Chip 50 value">
+            </div>
+            <div class="pot-square">
+                <p>Chips</p>
+                <p id="pot">$500</p>
+            </div>
+        </div>
+        <div class="betting-options">
+            <button id="doubledown" class="disabled">Double Down</button>
+            <button id="split" class="disabled">Split</button>
+        </div>
+    </body>
+</html>
