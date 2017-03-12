@@ -281,13 +281,41 @@ function deal() {
       $('#doubledown').removeClass('disabled');
     }
 
+    //if dealers second card is Ace and they have funds to cover insurance then offer insurance
     if(dealerHand.secondCardIsAce() && (bets.potAmount() >= parseInt(bets.betAmount()/2))){
       offerInsurance();
+    } else {
+      // if insurance is not offered check if player has blackjack and if yes then move on to dealer turn
+      if (playerHand.hasBlackJack()) {
+        dealerTurn();
+      }
+
     }
+
+}
+
+function continueAfterOfferingInsurance() {
+  console.log("i'm continuing now that I have an insurance answer");
+  // did player buy insurance?
+  if (bets.insuranceBet > 0 ){
+    // they did buy insurance so if dealer has blackjack then pay out insurance wins
+    if (dealerHand.hasBlackJack()){
+      bets.pot += 2* bets.insuranceBet;
+      bets.insuranceBet = 0;
+      dealerTurn();
+    // they bought insurance but dealer doesn't have blackjack so they lose insurance bet and continue
+    } else {
+      bets.insuranceBet = 0;
+    }
+
+  // if player buys insurnace and dealer does NOT have blackjack then players loses insurance bet
+  } else {
 
     if (playerHand.hasBlackJack()) {
       dealerTurn();
     }
+  }
+
 
 }
 
@@ -394,7 +422,7 @@ function dealerTurn() {
     // $('#deal-button').removeClass('disabled');
     $('#hit-button').addClass('disabled');
     $('#stand-button').addClass('disabled');
-
+    $('.betting div:nth-child(1n+2):not(:last-child)').removeClass('disabled');
     // If Player went bust then don't reveal hole card
     if (revealHoleCard === true){
       updateDealerScore();
@@ -431,21 +459,26 @@ function outOfChips(){
 }
 
 function offerInsurance(){
+    console.log("offering them insurance");
     swal({
       title: "The Dealer May Have BlackJack!",
       showCancelButton: true,
       confirmButtonText: "Yes",
       cancelButtonText: "No",
-      timer: 2000,
       allowOutsideClick: true,
       closeOnConfirm: true,
+      closeOnCancel: true,
       text: "Do you want to buy insurance?",
       imageUrl: "img/chip-2.png"
     },
       function(isConfirm){
         if (isConfirm) {
-          getInsuranceAmount();
+          console.log("player wants insurance");
+          bets.insuranceBet = parseInt(bets.betAmount()/2);
+          bets.pot -= bets.insuranceBet;
+          console.log("set insurance bet to: " + bets.insuranceBet);
         }
+        continueAfterOfferingInsurance();
     });
 }
 
@@ -467,10 +500,25 @@ function welcome() {
 
 function getInsuranceAmount() {
   var questionText = "Enter Your Insurance Bet Amount (0 to " + parseInt(bets.betAmount()/2) + ")";
+  console.log("I'm trying to get their amount");
   swal({
-    title: "How Much Insurance?",
+    title: "How much?",
     text: questionText,
-    imageUrl: "img/chip.png"
+    type: "input",
+    showCancelButton: true,
+    closeOnConfirm: false,
+    animation: "slide-from-top",
+    inputPlaceholder: "Write something"
+  },
+  function(inputValue){
+    if (inputValue === false) return false;
+
+    if (inputValue === "") {
+      swal.showInputError("You need to write something!");
+      return false;
+    }
+
+    // swal("Nice!", "You wrote: " + inputValue, "success");
   });
 }
 
@@ -488,7 +536,7 @@ $(function () {
     $('#fifteen').click(function() {bets.addBet(15);});
     $('#fifty').click(function() {bets.addBet(50);});
     $('#doubledown').click(doubleDown);
-    welcome();
+    // welcome();
 
 
 
