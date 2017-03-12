@@ -260,11 +260,11 @@ function deal() {
     $('#dealer-hand :first-child').attr('src', 'img/card.png');
     deck.draw('player');
 
-    // deck.draw('dealer');
-    cheatCard = new Card(1,"diamonds");
-    dealerHand.addCard(cheatCard);
-    cardToPlay = cheatCard.getImageUrl();
-    $('#dealer-hand').append(cardToPlay);
+    deck.draw('dealer');
+    // cheatCard = new Card(1,"diamonds");
+    // dealerHand.addCard(cheatCard);
+    // cardToPlay = cheatCard.getImageUrl();
+    // $('#dealer-hand').append(cardToPlay);
 
     // Update score for player and clear dealer
     updatePlayerScore();
@@ -298,13 +298,17 @@ function continueAfterOfferingInsurance() {
   console.log("i'm continuing now that I have an insurance answer");
   // did player buy insurance?
   if (bets.insuranceBet > 0 ){
+    console.log("player bought insurance");
     // they did buy insurance so if dealer has blackjack then pay out insurance wins
     if (dealerHand.hasBlackJack()){
-      bets.pot += 2* bets.insuranceBet;
+      console.log("dealer has blackjack so paying out Insurance bet");
+      bets.pot += 3* bets.insuranceBet;
       bets.insuranceBet = 0;
+      bets.updateAmounts();
       dealerTurn();
     // they bought insurance but dealer doesn't have blackjack so they lose insurance bet and continue
     } else {
+      console.log("dealer did NOT have blackjack so player loses insurance bet and plays on");
       bets.insuranceBet = 0;
     }
 
@@ -476,7 +480,11 @@ function offerInsurance(){
           console.log("player wants insurance");
           bets.insuranceBet = parseInt(bets.betAmount()/2);
           bets.pot -= bets.insuranceBet;
+          bets.updateAmounts();
           console.log("set insurance bet to: " + bets.insuranceBet);
+          console.log("pot: " + bets.pot);
+          console.log("bet: " + bets.bet);
+          console.log("Insurance bet: " + bets.insuranceBet);
         }
         continueAfterOfferingInsurance();
     });

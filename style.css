@@ -171,6 +171,10 @@ button:focus {
 
 /*styles that Todd added for betting*/
 
+#yes {
+  margin-left: 20px;
+}
+
 .betting-options {
     margin: 20px auto;
     height: 60px;
