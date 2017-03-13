@@ -2,7 +2,8 @@ var deck;
 var dealerHand = [];
 var playerHand = [];
 var bets = new Bets();
-var currentHand;
+var hands;
+var playerHandIndex ;
 
 function Bets(){
   this.pot = 500;
@@ -123,24 +124,43 @@ Card.prototype.getImageUrl = function(){
   return '<img src="deck/' + sundry + '_' + this.suit + '.png">';
 };
 //      Hands Object
-function Hands() {
-  this.hands = [];
 
+function Hands(){
+  this.hands = [];
 }
+
+Hands.prototype.getHand = function(index){
+  return this.hands[index];
+
+};
 
 Hands.prototype.addHand = function(hand) {
   this.hands.push(hand);
+};
+
+Hands.prototype.numHands = function(){
+  return this.hands.length;
 
 };
+
+Hands.prototype.allHandsComplete = function(){
+  return this.hands.reduce(function(a,b){return a && b.isComplete();},true);
+
+};
+
+
 //            Hand Object
 
-function Hand() {
+function Hand(name) {
   this.hand =[];
   this.doubledown = false;
+  this.complete = false;
+  this.name = name;
 }
 
 Hand.prototype.addCard = function(card){
   this.hand.push(card);
+  hands[playerHandIndex]=this.hand;
 
 };
 
@@ -164,13 +184,29 @@ Hand.prototype.firstCard = function(){
 
 };
 
+Hand.prototype.markComplete = function(){
+  this.complete = true;
+  hands[playerHandIndex]=this.hand;
+};
+
+Hand.prototype.isComplete = function(){
+  return this.complete;
+
+};
+
 Hand.prototype.doubleDown = function(){
   this.doubleDown = true;
 };
 
 Hand.prototype.getPoints = function(){
   var sumCards;
+  var ace;
   var sortedHand = this.hand.slice(0).sort(function(a,b){return b.point - a.point;});
+  var numberOfAces = this.hand.reduce(function(accum, card){
+    if (card.point === 1 ){ ace = 1; } else {ace = 0;}
+    return accum + ace;
+  },0);
+
   sumCards = sortedHand.reduce(function(currentSum, card) {
       var tempCardPoint = card.point;
       // If face card - point value is 10
@@ -178,7 +214,8 @@ Hand.prototype.getPoints = function(){
           tempCardPoint = 10;
       }
       if (card.point === 1){
-        if (currentSum + 11 > 21){
+        numberOfAces -=1;
+        if (currentSum + 11 + numberOfAces > 21){
           tempCardPoint = 1;
         } else {
           tempCardPoint = 11;
@@ -188,6 +225,9 @@ Hand.prototype.getPoints = function(){
   }, 0);
   return sumCards;
 };
+
+
+
 //                Deck Object
 function Deck() {
   this.deck = [];
@@ -203,16 +243,19 @@ function Deck() {
   } // End point for loop
 }
 
-Deck.prototype.draw = function(target) {
+Deck.prototype.draw = function(targetHand) {
+  console.log("entering deck.draw()");
+  console.log("targetHand: " + targetHand);
   var cardObject;
 
   // Get random number from 1 to length of current deck
   var randomIndex = parseInt(Math.random() * (this.deck.length));
   // Get card object from deck at random index from line above
   cardObject = this.deck[randomIndex];
-
-  if (target === 'player') {
-      playerHand.addCard(cardObject);
+  console.log("type of deck: " + targetHand.name);
+  if (targetHand.name === 'player') {
+      targetHand.addCard(cardObject);
+      hands[playerHandIndex]=targetHand;
       // Change card object into HTML tag and add to page
       // cardToPlay = getCardImageTag(cardObject);
       cardToPlay = cardObject.getImageUrl();
@@ -226,6 +269,7 @@ Deck.prototype.draw = function(target) {
     // Remove card object from random index location
     this.deck.splice(randomIndex, 1);
 
+  console.log("leaving deck.draw()");
   return cardObject;
 };
 
@@ -237,7 +281,11 @@ Deck.prototype.numCardsLeft = function() {
 
 // Initial deal, deals 2 cards to player, 2 to dealer
 function deal() {
-
+    console.log("new deal");
+    hands = new Hands();
+    hands.addHand(new Hand('player'));
+    playerHandIndex = 0;
+    playerHand = hands.getHand(playerHandIndex);
     // If no card has been dealt yet, make a new deck
     if ( $('#player-hand').children().length === 0 ) {
         deck = new Deck();
@@ -251,16 +299,15 @@ function deal() {
     // Remove cards from table, reset player hands
     $('#player-hand').children().remove();
     $('#dealer-hand').children().remove();
-    dealerHand = new Hand();
-    playerHand = new Hand();
+    dealerHand = new Hand('dealer');
 
     // Deal 4 cards
-    deck.draw('player');
-    deck.draw('dealer');
+    deck.draw(playerHand);
+    deck.draw(dealerHand);
     $('#dealer-hand :first-child').attr('src', 'img/card.png');
-    deck.draw('player');
+    deck.draw(playerHand);
 
-    deck.draw('dealer');
+    deck.draw(dealerHand);
     // cheatCard = new Card(1,"diamonds");
     // dealerHand.addCard(cheatCard);
     // cardToPlay = cheatCard.getImageUrl();
@@ -273,25 +320,68 @@ function deal() {
     // Change message to play, disable deal button and enable other buttons
     $('#messages').html("<h2>LET'S PLAY</h2>");
     $('#deal-button').addClass('disabled');
-    $('#hit-button').removeClass('disabled');
-    $('#stand-button').removeClass('disabled');
-    $('.betting div:nth-child(1n+2):not(:last-child)').addClass('disabled');
+    // $('#hit-button').removeClass('disabled');
+    // $('#stand-button').removeClass('disabled');
+    // $('.betting div:nth-child(1n+2):not(:last-child)').addClass('disabled');
 
-    if (bets.potAmount() >= bets.betAmount()){
-      $('#doubledown').removeClass('disabled');
+    // if (bets.potAmount() >= bets.betAmount()){
+    //   $('#doubledown').removeClass('disabled');
+    // }
+    //
+    // //if dealers second card is Ace and they have funds to cover insurance then offer insurance
+    // if(dealerHand.secondCardIsAce() && (bets.potAmount() >= parseInt(bets.betAmount()/2))){
+    //   offerInsurance();
+    // } else {
+    //   // if insurance is not offered check if player has blackjack and if yes then move on to dealer turn
+    //   if (playerHand.hasBlackJack()) {
+    //     dealerTurn();
+    //   }
+    //
+    // }
+
+    console.log("Done with initial deal...calling processHands");
+    processHands();
+
+}
+
+function processHands(){
+  console.log("entering processHands()");
+  playerHand = hands.getHand(playerHandIndex);
+
+  $('#hit-button').removeClass('disabled');
+  $('#stand-button').removeClass('disabled');
+  $('.betting div:nth-child(1n+2):not(:last-child)').addClass('disabled');
+
+  if (bets.potAmount() >= bets.betAmount()){
+    $('#doubledown').removeClass('disabled');
+  }
+
+  //if dealers second card is Ace and they have funds to cover insurance then offer insurance
+  if(dealerHand.secondCardIsAce() && (bets.potAmount() >= parseInt(bets.betAmount()/2))){
+    offerInsurance();
+  } else {
+    // if insurance is not offered check if player has blackjack and if yes then move on to dealer turn
+    if (playerHand.hasBlackJack()) {
+      playerHand.markComplete();
+      hands[playerHandIndex]= playerHand;
+
     }
 
-    //if dealers second card is Ace and they have funds to cover insurance then offer insurance
-    if(dealerHand.secondCardIsAce() && (bets.potAmount() >= parseInt(bets.betAmount()/2))){
-      offerInsurance();
-    } else {
-      // if insurance is not offered check if player has blackjack and if yes then move on to dealer turn
-      if (playerHand.hasBlackJack()) {
-        dealerTurn();
-      }
+  }
 
-    }
+  if (hands.allHandsComplete()) {
+    console.log("all hands are now complete so calling dealerTurn()");
+    dealerTurn();}
+  console.log("exiting processHands()");
+}
 
+function stand(){
+  console.log("entering stand()");
+  playerHand.markComplete();
+  hands[playerHandIndex]= playerHand;
+
+  if (hands.allHandsComplete()) {dealerTurn();}
+  console.log("exiting stand()");
 }
 
 function continueAfterOfferingInsurance() {
@@ -316,10 +406,11 @@ function continueAfterOfferingInsurance() {
   } else {
 
     if (playerHand.hasBlackJack()) {
-      dealerTurn();
+      playerHand.markComplete();
+      hands[playerHandIndex]= playerHand;
+      processHands();
     }
   }
-
 
 }
 
@@ -338,31 +429,36 @@ function flipHoleCard() {
 
 function doubleDown(){
   playerHand.doubleDown();
-  deck.draw('player');
+  deck.draw(playerHand);
   bets.doubleDown();
   updatePlayerScore();
-  dealerTurn();
+  playerHand.markComplete();
+  processHands();
 }
 
 // Player portion, deal card to player and calculate points after that hit
 function hit() {
+    console.log("entering hit()");
     $('#doubledown').addClass('disabled');
     //  Deal a card as player
 
-    deck.draw('player');
+    deck.draw(playerHand);
     updatePlayerScore();
 
     if (playerHand.getPoints() >= 21) {
         $('#hit-button').addClass('disabled');
         $('#stand-button').addClass('disabled');
         // $('#deal-button').removeClass('disabled');
-        dealerTurn();
+        playerHand.markComplete();
+        hands[playerHandIndex]= playerHand;
+        processHands();
     }
-
+    console.log("exiting hit()");
 }
 
 // Start Dealer portion and check winner scenarios
 function dealerTurn() {
+    console.log("entering dealerTurn()");
     var gameOver = false;
     var revealHoleCard = true;
     var playerPoints = playerHand.getPoints();
@@ -537,7 +633,7 @@ $(function () {
     $('#deal-button').addClass('disabled');
     $('#hit-button').click(hit);
 
-    $('#stand-button').click(dealerTurn);
+    $('#stand-button').click(stand);
 
     $('#five').click(function() {bets.addBet(5);});
     $('#ten').click(function() {bets.addBet(10);});
